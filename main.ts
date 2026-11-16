@@ -1,15 +1,17 @@
-// Token Radar (radar-2): the entrypoint.
+// Token Radar (radar-2): the entrypoint, rewritten for the resubmission.
 //
-// Reads the sealed snapshot from /input/snapshot.json (or --input <file|dir>),
-// scores every pre-token protocol with the comps-calibrated model in lib/model.ts,
-// writes the ranked board to /output/board.json, writes the dashboard's data as
-// /output/data.js, copies this repository's dashboard/ and screenshots/ to
-// /output, and writes /output/dossier.json with the vendored make.fun library.
+// It reads the sealed snapshot from /input/snapshot.json (or --input
+// <file|dir>), scores every pre-token protocol with the comps-calibrated
+// model in lib/model.ts, writes the ranked board to /output/board.json,
+// writes the dashboard's data as /output/data.js, copies this repository's
+// dashboard/ and screenshots/ to /output, and writes /output/dossier.json
+// with the vendored make.fun library.
 //
-// The dashboard is a static page, no framework and no network: dashboard/index.html,
-// dashboard/app.css and dashboard/app.js read /output/data.js. It runs twice in
-// grading and both runs must write the same bytes: the model is a pure function
-// of the snapshot, with no clock, no randomness and no network.
+// The dashboard is a static page, no framework and no network:
+// dashboard/index.html, dashboard/app.css and dashboard/app.js read
+// /output/data.js. Grading runs it twice and both runs must write the same
+// bytes: the model is a pure function of the snapshot, with no clock, no
+// randomness and no network.
 //
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts --input ../input/snapshot.json
@@ -38,7 +40,9 @@ function arg(name: string, fallback: string): string {
 const inputArg = arg('input', '/input');
 const inputFile = inputArg.endsWith('.json') ? inputArg : join(inputArg, 'snapshot.json');
 if (!existsSync(inputFile)) {
-  process.stderr.write(`token radar: no snapshot at ${inputFile}: pass --input <snapshot.json|directory> or mount the sealed /input\n`);
+  process.stderr.write(
+    `token radar: no snapshot at ${inputFile}: pass --input <snapshot.json|directory> or mount the sealed /input\n`,
+  );
   process.exit(2);
 }
 const out = arg('output', process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
@@ -83,7 +87,8 @@ for (const name of shots) {
   }
 }
 
-// The dossier is written last: the scorer rebuilds it from this /output and compares bytes.
+// The dossier is written last: the scorer rebuilds it from this /output and
+// compares the bytes, so nothing may change after this write.
 writeFileSync(
   join(out, 'dossier.json'),
   buildDossier(out, { text_max_bytes: TEXT_MAX_BYTES, screenshots: SCREENSHOT_CAPS, dashboard: { max_files: 400, max_bytes: 4_194_304 } }),

@@ -1,8 +1,9 @@
-// Token Radar's dashboard. It reads window.RADAR (written beside dashboard/ by
-// main.ts) and renders the ranked board, a filterable table, a per-protocol
-// detail drawer with the model's own inputs and the protocol's farm plan, the
-// sector comparables behind the model, and the live-token view. No network:
-// every byte it shows is in data.js.
+// Token Radar's dashboard, rewritten for the resubmission: it reads
+// window.RADAR (written beside dashboard/ by main.ts) and renders the
+// ranked board, a filterable table, a per-protocol detail drawer carrying
+// the model's own inputs and the protocol's farm plan, the sector
+// comparables behind the model, and the live-token view. No network: every
+// byte it shows is in data.js.
 //
 // The farm plan and the implied value are recomputed here from the same
 // derivation main.ts writes to board.json, so the page and the board agree.
@@ -33,8 +34,9 @@
   }
   function fmtMult(n) { return 'x' + n.toFixed(2); }
 
-  // impliedOf: the model in one function. The page recomputes a row from the
-  // snapshot figures and checks the number board.json carries.
+  // impliedOf: the whole model in one function. The page recomputes a row
+  // from the snapshot figures and checks it against the number board.json
+  // carries, so a stale data.js shows up as a mismatch in the drawer.
   function impliedOf(row, model) {
     var growth = Math.min(model.growth_cap, Math.max(model.growth_floor, row.change_7d === null || row.change_7d === undefined ? 0 : row.change_7d));
     var growthMult = 1 + (growth / 100) * model.growth_weight;
@@ -44,6 +46,9 @@
     return Math.max(1, Math.round(row.tvl_usd * row.sector_multiple * growthMult * maturity * breadth));
   }
 
+  // el: a tiny element builder. Attribute keys named class/text/html are
+  // special; keys starting with "on" become listeners; everything else
+  // becomes an attribute. Children may be nodes, strings or arrays.
   function el(tag, attrs) {
     var node = document.createElement(tag);
     if (attrs) {
@@ -65,9 +70,9 @@
     return node;
   }
 
-  // The farm plan, the same derivation main.ts writes to board.json: category,
-  // chains, TVL and age decide the action, the capital, the hold and every
-  // cost and time. No name is special-cased.
+  // The farm plan, derived the same way main.ts writes it to board.json:
+  // category, chains, TVL and age decide the action, the capital, the hold
+  // and every cost and time. No protocol name is ever special-cased here.
   function chainOf(p) { return p.chains && p.chains.length > 0 ? p.chains[0] : 'its main chain'; }
   function capitalFor(p) {
     if (p.tvl_usd >= 5e9) return 250;
@@ -84,17 +89,27 @@
   function actionFor(p, capital, chain) {
     var c = (p.category || '').toLowerCase();
     var name = p.name;
-    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0) return 'Supply $' + capital + ' of USDC to ' + name + ' on ' + chain + ' and keep the position open.';
-    if (c.indexOf('dex') >= 0 || c.indexOf('yield') >= 0 || c.indexOf('leveraged farm') >= 0) return 'Provide $' + capital + ' of liquidity to ' + name + "'s main pool on " + chain + ' and keep the position open.';
-    if (c.indexOf('bridge') >= 0) return 'Bridge $' + capital + ' of USDC to ' + chain + ' through ' + name + ' and use the bridged funds in its app.';
-    if (c.indexOf('staking') >= 0 || c.indexOf('restak') >= 0) return "Stake $" + capital + " of the chain's staking asset through " + name + ' and keep the receipt token.';
-    if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0) return 'Deposit $' + capital + ' of USDC as margin on ' + name + ' and open one small hedged position.';
+    if (c.indexOf('lend') >= 0 || c.indexOf('cdp') >= 0 || c.indexOf('collateral') >= 0)
+      return 'Supply $' + capital + ' of USDC to ' + name + ' on ' + chain + ' and keep the position open.';
+    if (c.indexOf('dex') >= 0 || c.indexOf('yield') >= 0 || c.indexOf('leveraged farm') >= 0)
+      return 'Provide $' + capital + ' of liquidity to ' + name + "'s main pool on " + chain + ' and keep the position open.';
+    if (c.indexOf('bridge') >= 0)
+      return 'Bridge $' + capital + ' of USDC to ' + chain + ' through ' + name + ' and use the bridged funds in its app.';
+    if (c.indexOf('staking') >= 0 || c.indexOf('restak') >= 0)
+      return "Stake $" + capital + " of the chain's staking asset through " + name + ' and keep the receipt token.';
+    if (c.indexOf('perpetual') >= 0 || c.indexOf('derivative') >= 0)
+      return 'Deposit $' + capital + ' of USDC as margin on ' + name + ' and open one small hedged position.';
     if (c.indexOf('prediction') >= 0) return 'Fund $' + capital + ' and place one market position on ' + name + '.';
-    if (c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('vault') >= 0) return 'Deposit $' + capital + ' into a ' + name + ' vault on ' + chain + ' and keep the shares.';
-    if (c.indexOf('stable') >= 0) return 'Mint or deposit $' + capital + ' of the stable asset through ' + name + ' on ' + chain + '.';
-    if (c.indexOf('rwa') >= 0) return "Mint $" + capital + " of the protocol's yield asset on " + chain + ' and hold it.';
-    if (c.indexOf('insurance') >= 0) return 'Buy $' + capital + ' of cover from ' + name + ' on ' + chain + ' and keep the policy.';
-    if (c.indexOf('liquid') >= 0) return 'Deposit $' + capital + ' of the staking asset into ' + name + ' on ' + chain + ' and hold the receipt.';
+    if (c.indexOf('curator') >= 0 || c.indexOf('allocator') >= 0 || c.indexOf('vault') >= 0)
+      return 'Deposit $' + capital + ' into a ' + name + ' vault on ' + chain + ' and keep the shares.';
+    if (c.indexOf('stable') >= 0)
+      return 'Mint or deposit $' + capital + ' of the stable asset through ' + name + ' on ' + chain + '.';
+    if (c.indexOf('rwa') >= 0)
+      return "Mint $" + capital + " of the protocol's yield asset on " + chain + ' and hold it.';
+    if (c.indexOf('insurance') >= 0)
+      return 'Buy $' + capital + ' of cover from ' + name + ' on ' + chain + ' and keep the policy.';
+    if (c.indexOf('liquid') >= 0)
+      return 'Deposit $' + capital + ' of the staking asset into ' + name + ' on ' + chain + ' and hold the receipt.';
     return 'Deposit $' + capital + ' of USDC into ' + name + ' on ' + chain + ' and keep the position open.';
   }
   function weeklyFor(p) {
@@ -276,13 +291,15 @@
         el('td', { class: 'num', text: String(r.rank) }),
         el('td', null, el('div', { class: 'name' },
           el('b', { text: r.name }),
-          el('span', { class: 'sub', text: (r.category || 'Other') + ' on ' + (r.chains && r.chains.length ? r.chains.slice(0, 2).join(', ') : 'an unnamed chain') })
+          el('span', { class: 'sub', text: (r.category || 'Other') + ' on ' +
+            (r.chains && r.chains.length ? r.chains.slice(0, 2).join(', ') : 'an unnamed chain') })
         )),
         el('td', { class: 'num', text: fmtUsd(r.tvl_usd) }),
         el('td', { class: 'num ' + growthClass, text: growth }),
         el('td', { class: 'num', text: fmtAge(r.age_days) }),
         el('td', null, el('div', { class: 'implied' },
-          el('div', { class: 'bar', 'aria-hidden': 'true' }, el('i', { style: 'width:' + Math.max(3, Math.round((r.implied_value_usd / max) * 100)) + '%' })),
+          el('div', { class: 'bar', 'aria-hidden': 'true' },
+            el('i', { style: 'width:' + Math.max(3, Math.round((r.implied_value_usd / max) * 100)) + '%' })),
           el('span', { class: 'num', text: fmtUsd(r.implied_value_usd) })
         )),
         el('td', null, el('span', { class: 'status', text: 'no token' }))
@@ -313,7 +330,10 @@
     DATA.live.forEach(function (r) {
       tbody.appendChild(el('tr', null,
         el('td', { class: 'num', text: 'live' }),
-        el('td', null, el('div', { class: 'name' }, el('b', { text: r.name }), el('span', { class: 'sub', text: (r.category || 'Other') + ' on ' + (r.chains && r.chains.length ? r.chains.slice(0, 2).join(', ') : 'an unnamed chain') }))),
+        el('td', null, el('div', { class: 'name' },
+          el('b', { text: r.name }),
+          el('span', { class: 'sub', text: (r.category || 'Other') + ' on ' +
+            (r.chains && r.chains.length ? r.chains.slice(0, 2).join(', ') : 'an unnamed chain') }))),
         el('td', { class: 'num', text: fmtUsd(r.tvl_usd) }),
         el('td', { class: 'num ' + (r.change_7d !== null && r.change_7d >= 0 ? 'pos' : 'neg'), text: fmtPct(r.change_7d) }),
         el('td', { class: 'num', text: fmtUsd(r.mcap_usd) }),
@@ -349,8 +369,7 @@
         m.maturity_floor + ' + min(age_days, ' + m.maturity_days + ') / ' + m.maturity_days + ' × ' + m.maturity_range +
         ') × (1 + ' + m.breadth_per_chain + ' × min(chains − 1, ' + m.breadth_max_chains + ')) )'
       ),
-      el('p', { class: 'sub', text: 'The sector multiple is the median market-cap-to-TVL of the live-token protocols in the same category (at least ' + m.min_comps + ' comps, clamped to ' + m.multiple_floor + '–' + m.multiple_cap + '); a category with too few comps falls back to the global median of ' + fmtMult(DATA.global_multiple) + '. TVL and seven-day growth come from the snapshot. Age is the time since the protocol was first listed — how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days. Breadth rewards protocols live on more chains.' }),
-      el('h3', { text: 'Sector comparables' }),
+      el('p', { class: 'sub', text: 'The sector multiple is the median market-cap-to-TVL of the live-token protocols in the same category (at least ' + m.min_comps + ' comps, clamped to ' + m.multiple_floor + '–' + m.multiple_cap + '); a category with too few comps falls back to the global median of ' + fmtMult(DATA.global_multiple) + '. TVL and seven-day growth come from the snapshot. Age is the time since the protocol was first listed — how long it has run with no token; an unlisted age uses ' + m.unknown_age_days + ' days. Breadth rewards protocols live on more chains.' }),      el('h3', { text: 'Sector comparables' }),
       el('div', { class: 'sectors' }, sectorCards),
       el('p', { class: 'note', text: '“No token” means the snapshot records no token for the protocol — DefiLlama\'s record is not proof that none exists. Wrapped, staked and bridged products of tokens that already trade are kept off the watchlist.' })
     );
